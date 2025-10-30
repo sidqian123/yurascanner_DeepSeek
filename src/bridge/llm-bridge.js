@@ -35,17 +35,58 @@ class LLMBridge {
         }
 
         if (!program.opts().manual) {
-            // Setup LLM API
-            this.openai = new OpenAI({
-                apiKey: this.model.includes('gpt') ? process.env.OPENAI_API_KEY : 'na',
-                baseURL: program.opts().modelEndpoint
-            });
+            const providerConfig = this._resolveProviderConfig(this.model);
+            const endpoint = program.opts().modelEndpoint || providerConfig.defaultEndpoint;
+            const apiKey = this._resolveApiKey(providerConfig.envVars);
+
+            if (!apiKey) {
+                console.log(errorColor(`[!] Missing API key. Please set one of: ${providerConfig.envVars.join(', ')}`));
+                process.exit(1);
+            }
+
+            const clientConfig = { apiKey };
+            if (endpoint) {
+                clientConfig.baseURL = endpoint;
+            }
+
+            this.openai = new OpenAI(clientConfig);
         }
     }
 
 
     clearChatHistory() {
         this.chatHistory = [];
+    }
+
+    _resolveProviderConfig(modelName) {
+        const providers = [
+            {
+                match: (name) => typeof name === 'string' && name.toLowerCase().includes('deepseek'),
+                envVars: ['DEEPSEEK_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY'],
+                defaultEndpoint: 'https://api.deepseek.com/v1'
+            }
+        ];
+
+        const fallbackProvider = {
+            envVars: ['OPENAI_API_KEY', 'LLM_API_KEY'],
+            defaultEndpoint: undefined
+        };
+
+        if (!modelName) {
+            return fallbackProvider;
+        }
+
+        const provider = providers.find((entry) => entry.match(modelName));
+        return provider || fallbackProvider;
+    }
+
+    _resolveApiKey(preferredEnvVars) {
+        for (const envVar of preferredEnvVars) {
+            if (process.env[envVar]) {
+                return process.env[envVar];
+            }
+        }
+        return null;
     }
 
 

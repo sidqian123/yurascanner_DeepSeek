@@ -62,9 +62,17 @@ instance. As shown in the figure, it uses the Actions Mapping to translate the n
     The command `yurascanner` can now be used globally from the command line.
 
 
-3. Next, create an `.env` file in the root folder of the repository. It has to contain the following line:
+3. Next, create an `.env` file in the root folder of the repository and provide the API key for the LLM provider you intend to use:
     ```dotenv
-    OPENAI_API_KEY={Your API key here}
+    # OpenAI example
+    OPENAI_API_KEY=sk-...
+
+    # DeepSeek example
+    DEEPSEEK_API_KEY=sk-...
+    ```
+   When using DeepSeek, run YuraScanner with a DeepSeek model name and endpoint, for example:
+    ```bash
+    yurascanner http://localhost/admin/ --model deepseek-chat --model-endpoint https://api.deepseek.com/v1
     ```
    **⚠️ Please note that your account will be billed for the API requests that YuraScanner performs!**
 
